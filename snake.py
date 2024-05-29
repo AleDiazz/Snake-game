@@ -366,7 +366,8 @@ def main():
         game_window.fill(black)
 
         for pos in snake_body:
-            pygame.draw.rect(game_window, green, pygame.Rect(pos[0], pos[1], 10, 10))
+            pygame.draw.rect(game_window, black, pygame.Rect(pos[0], pos[1], 10, 10))
+            pygame.draw.rect(game_window, green, pygame.Rect(pos[0] + 1, pos[1] + 1, 8, 8))
 
         if food_spawn:
             pygame.draw.rect(game_window, red, pygame.Rect(food_position[0], food_position[1], 10, 10))
