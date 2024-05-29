@@ -13,6 +13,7 @@ red = pygame.Color(255, 0, 0)
 green = pygame.Color(0, 255, 0)
 blue = pygame.Color(0, 0, 255)
 yellow = pygame.Color(255, 255, 0)
+pink = pygame.Color(255, 192, 203)
 
 # Initializing pygame
 pygame.init()
@@ -50,6 +51,9 @@ godmode_eaten = False
 betterApple_position = None
 betterApple_spawn = False
 betterApple_eaten = False
+speedBoost_position = None
+speedBoost_spawn = False
+speedBoost_eaten = False
 
 # setting initial snake direction randomly
 direction = random.choice(['RIGHT', 'LEFT', 'UP', 'DOWN'])
@@ -63,6 +67,8 @@ godmode = False
 godmode_start_time = 0
 betterApple = False
 betterApple_start_time = 0
+speedBoost = False
+speedBoost_start_time = 0
 
 # displaying Score function
 def show_score(color):
@@ -76,9 +82,15 @@ def show_godmode_timer(remaining_time):
     timer_rect = timer_surface.get_rect(center=(window_x // 2, 60))
     game_window.blit(timer_surface, timer_rect)
 
-# displaying BetterApple timer function
+# displaying Better Apple timer function
 def show_betterApple_timer(remaining_time):
     timer_surface = font.render('BetterApple: ' + str(round(remaining_time, 1)) + 's', True, white)
+    timer_rect = timer_surface.get_rect(center=(window_x // 2, 60))
+    game_window.blit(timer_surface, timer_rect)
+
+# displaying Speed Boost timer function
+def show_speedBoost_timer(remaining_time):
+    timer_surface = font.render('SpeedBoost: ' + str(round(remaining_time, 1)) + 's', True, white)
     timer_rect = timer_surface.get_rect(center=(window_x // 2, 60))
     game_window.blit(timer_surface, timer_rect)
 
@@ -113,7 +125,10 @@ def start_screen():
     instructions_text = [
         "Use arrow keys to move",
         "Avoid walls and your tail",
-        "Eat food to grow"
+        "Eat food to grow",
+        "p Pause",
+        "m Add +10 Score",
+        "u remove snake segment"
     ]
     for i, line in enumerate(instructions_text):
         text_surface = small_font.render(line, True, white)
@@ -159,6 +174,8 @@ def game_over():
     global snake_position, snake_body, food_position, food_spawn, score
     global godmode_position, godmode_spawn, godmode_eaten, godmode, godmode_start_time
     global betterApple_position, betterApple_spawn, betterApple_eaten, betterApple, betterApple_start_time
+    global speedBoost_position, speedBoost_spawn, speedBoost_eaten, speedBoost, speedBoost_start_time
+
 
     game_over_surface = font.render('Your Score is : ' + str(score), True, red)
     game_over_rect = game_over_surface.get_rect(center=(window_x // 2, window_y // 2))
@@ -183,6 +200,11 @@ def game_over():
     betterApple_spawn = False
     betterApple_eaten = False
     betterApple_start_time = 0
+    speedBoost = False
+    speedBoost_position = None
+    speedBoost_spawn = False
+    speedBoost_eaten = False
+    speedBoost_start_time = 0
 
     main()
 
@@ -191,6 +213,7 @@ def main():
     global direction, change_to, snake_position, snake_body, food_position, food_spawn, score
     global godmode_position, godmode_spawn, godmode_eaten, godmode, godmode_start_time
     global betterApple_position, betterApple_spawn, betterApple_eaten, betterApple, betterApple_start_time
+    global speedBoost_position, speedBoost_spawn, speedBoost_eaten, speedBoost, speedBoost_start_time
 
 
     start_screen()
@@ -278,7 +301,7 @@ def main():
         else:
             snake_body.pop()
 
-        if not food_spawn and not godmode_spawn and not betterApple_spawn:
+        if not food_spawn and not godmode_spawn and not betterApple_spawn and not speedBoost_spawn:
             food_position = [random.randrange(1, (window_x // 10)) * 10,
                             random.randrange(1, (window_y // 10)) * 10]
             food_spawn = True
@@ -296,6 +319,11 @@ def main():
             betterApple_spawn = True
             food_spawn = False  # Ensure normal food doesn't spawn with power-up food
 
+        if score >= 700 and not speedBoost_spawn and not speedBoost_eaten:
+            speedBoost_position = [random.randrange(1, (window_x // 10)) * 10,
+                                    random.randrange(1, (window_y // 10)) * 10]
+            speedBoost_spawn = True
+            food_spawn = False  # Ensure normal food doesn't spawn with power-up food
 
         # Check if snake has eaten power-up foods
         if godmode_spawn and snake_position[0] == godmode_position[0] and snake_position[1] == godmode_position[1]:
@@ -314,13 +342,26 @@ def main():
             snake_body.append(list(snake_body[-1]))
             score += 10
 
+        if speedBoost_spawn and snake_position[0] == speedBoost_position[0] and snake_position[1] == speedBoost_position[1]:
+            speedBoost = True
+            speedBoost_start_time = time.time()
+            speedBoost_spawn = False
+            speedBoost_eaten = True
+            snake_body.append(list(snake_body[-1]))
+            score += 10
+
         # Disable GODMODE after 20 seconds
         if godmode and time.time() - godmode_start_time > 20:
             godmode = False
 
-        # Disable Better Apple after 15 seconds
-        if betterApple and time.time() - betterApple_start_time > 15:
+        # Disable Better Apple after 20 seconds
+        if betterApple and time.time() - betterApple_start_time > 20:
             betterApple = False
+
+        # Disable Speed Boost after 20 seconds
+        if speedBoost and time.time() - speedBoost_start_time > 20:
+            speedBoost = False
+            speed_multiplier = 1
 
         game_window.fill(black)
 
@@ -335,6 +376,9 @@ def main():
 
         if betterApple_spawn:
             pygame.draw.rect(game_window, yellow, pygame.Rect(betterApple_position[0], betterApple_position[1], 10, 10))
+
+        if speedBoost_spawn:
+            pygame.draw.rect(game_window, pink, pygame.Rect(speedBoost_position[0], speedBoost_position[1], 10, 10))
 
         # Game Over conditions
         if not godmode:
@@ -361,11 +405,19 @@ def main():
             remaining_time = 20 - (time.time() - betterApple_start_time)
             show_betterApple_timer(remaining_time)
 
+        # displaying Speed Boost timer
+        if speedBoost:
+            remaining_time = 20 - (time.time() - speedBoost_start_time)
+            show_speedBoost_timer(remaining_time)
+
         # Refresh game screen
         pygame.display.update()
 
         # Frame Per Second /Refresh Rate
-        fps.tick(15)
+        if speedBoost:
+            fps.tick(30)
+        else:
+            fps.tick(15)
 
 
 if __name__ == "__main__":
