@@ -1,6 +1,7 @@
 import pygame
 import time
 import random
+import asyncio
 
 # Window size
 window_x = 720
@@ -163,14 +164,14 @@ def start_screen():
                 waiting = False
 
 # Pause screen Function
-def show_pause_screen():
+async def show_pause_screen():
     pause_text = font.render('Paused', True, white)
     pause_rect = pause_text.get_rect(center=(window_x // 2, window_y // 2))
     game_window.blit(pause_text, pause_rect)
     pygame.display.flip()
 
 # Restarts the game
-def game_over():
+def restart_game():
     global snake_position, snake_body, food_position, food_spawn, score
     global godmode_position, godmode_spawn, godmode_eaten, godmode, godmode_start_time
     global betterApple_position, betterApple_spawn, betterApple_eaten, betterApple, betterApple_start_time
@@ -206,10 +207,18 @@ def game_over():
     speedBoost_eaten = False
     speedBoost_start_time = 0
 
-    main()
+    start_screen()
+
+def game_over():
+    game_over_surface = font.render('Your Score is : ' + str(score), True, red)
+    game_over_rect = game_over_surface.get_rect(center=(window_x // 2, window_y // 2))
+    game_window.blit(game_over_surface, game_over_rect)
+    pygame.display.flip()
+    time.sleep(2)
+    restart_game()
 
 # Main Function
-def main():
+async def main():
     global direction, change_to, snake_position, snake_body, food_position, food_spawn, score
     global godmode_position, godmode_spawn, godmode_eaten, godmode, godmode_start_time
     global betterApple_position, betterApple_spawn, betterApple_eaten, betterApple, betterApple_start_time
@@ -420,6 +429,8 @@ def main():
         else:
             fps.tick(15)
 
+        await asyncio.sleep(0)
+
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
