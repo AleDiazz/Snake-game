@@ -21,6 +21,12 @@ pygame.init()
 pygame.display.set_caption('AlBot Snake Game')
 game_window = pygame.display.set_mode((window_x, window_y))
 
+# Set up font and color
+font = pygame.font.SysFont('Arial', 36)
+small_font = pygame.font.SysFont('Arial', 24)
+white = (255, 255, 255)
+black = (0, 0, 0)
+
 # FPS (frames per second) controller
 fps = pygame.time.Clock()
 
@@ -58,9 +64,6 @@ godmode_start_time = 0
 betterApple = False
 betterApple_start_time = 0
 
-# Font settings
-font = pygame.font.SysFont('times new roman', 30)
-
 # displaying Score function
 def show_score(color):
     score_surface = font.render('Score : ' + str(score), True, color)
@@ -86,18 +89,52 @@ def game_over():
     game_window.blit(game_over_surface, game_over_rect)
     pygame.display.flip()
     time.sleep(2)
-    pygame.quit()
-    quit()
+    game_over()
 
 # Start screen function
 def start_screen():
+    game_window.fill(black)  # Fill the screen with black
+
+    # Render the game title text
     game_title = font.render('AlBot Snake Game', True, white)
     title_rect = game_title.get_rect(center=(window_x // 2, window_y // 4))
     game_window.blit(game_title, title_rect)
 
+    # Render the start prompt text
     start_text = font.render('Click to Start', True, white)
-    start_rect = start_text.get_rect(center=(window_x // 2, window_y // 2))
+    start_rect = start_text.get_rect(center=(window_x // 2, window_y // 2 - 30))
     game_window.blit(start_text, start_rect)
+
+    # Render instructions
+    instructions_title = small_font.render('-Instructions', True, white)
+    instructions_rect = instructions_title.get_rect(topleft=(50, window_y - 230))
+    game_window.blit(instructions_title, instructions_rect)
+
+    instructions_text = [
+        "Use arrow keys to move",
+        "Avoid walls and your tail",
+        "Eat food to grow"
+    ]
+    for i, line in enumerate(instructions_text):
+        text_surface = small_font.render(line, True, white)
+        game_window.blit(text_surface, (50, window_y - 200 + i * 30))
+
+    # Render power-ups
+    powerups_title = small_font.render('-Power-ups', True, white)
+    powerups_rect = powerups_title.get_rect(topleft=(window_x - 300, window_y - 230))
+    game_window.blit(powerups_title, powerups_rect)
+
+    powerups_text = [
+        "GODMODE: Blue Apple",
+        "Can't Die",
+        "BetterApple: Yellow Apple",
+        "2x Score and Growth",
+        "Speed Boost: Pink Apple",
+        "Twice as Fast"
+    ]
+    for i, line in enumerate(powerups_text):
+        text_surface = small_font.render(line, True, white)
+        game_window.blit(text_surface, (window_x - 300, window_y - 200 + i * 30))
 
     pygame.display.flip()
 
@@ -116,6 +153,38 @@ def show_pause_screen():
     pause_rect = pause_text.get_rect(center=(window_x // 2, window_y // 2))
     game_window.blit(pause_text, pause_rect)
     pygame.display.flip()
+
+# Restarts the game
+def game_over():
+    global snake_position, snake_body, food_position, food_spawn, score
+    global godmode_position, godmode_spawn, godmode_eaten, godmode, godmode_start_time
+    global betterApple_position, betterApple_spawn, betterApple_eaten, betterApple, betterApple_start_time
+
+    game_over_surface = font.render('Your Score is : ' + str(score), True, red)
+    game_over_rect = game_over_surface.get_rect(center=(window_x // 2, window_y // 2))
+    game_window.blit(game_over_surface, game_over_rect)
+    pygame.display.flip()
+    time.sleep(2)
+
+    snake_position = [random.randrange(1, (window_x // 10)) * 10,
+                      random.randrange(1, (window_y // 10)) * 10]
+    snake_body = [[100, 50], [90, 50]]
+    food_position = [random.randrange(1, (window_x // 10)) * 10,
+                     random.randrange(1, (window_y // 10)) * 10]
+    food_spawn = True
+    score = 0
+    godmode = False
+    godmode_position = None
+    godmode_spawn = False
+    godmode_eaten = False
+    godmode_start_time = 0
+    betterApple = False
+    betterApple_position = None
+    betterApple_spawn = False
+    betterApple_eaten = False
+    betterApple_start_time = 0
+
+    main()
 
 # Main Function
 def main():
