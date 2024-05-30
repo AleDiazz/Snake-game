@@ -1,6 +1,7 @@
 import pygame
-import time
 import random
+import asyncio
+import time
 
 # Window size
 window_x = 720
@@ -25,201 +26,184 @@ game_window = pygame.display.set_mode((window_x, window_y))
 # Set up font and color
 font = pygame.font.SysFont('Arial', 36)
 small_font = pygame.font.SysFont('Arial', 24)
-white = (255, 255, 255)
-black = (0, 0, 0)
 
 # FPS (frames per second) controller
 fps = pygame.time.Clock()
 
-# defining snake default position
-snake_position = [random.randrange(1, (window_x // 10)) * 10,
-                  random.randrange(1, (window_y // 10)) * 10]
-
-# defining first blocks of snake body
-snake_body = [[100, 50],
-              [90, 50]]
-
-# fruit position
-food_position = [random.randrange(1, (window_x // 10)) * 10,
-                 random.randrange(1, (window_y // 10)) * 10]
-food_spawn = True
-
-# power-up food position
-godmode_position = None
-godmode_spawn = False
-godmode_eaten = False
-betterApple_position = None
-betterApple_spawn = False
-betterApple_eaten = False
-speedBoost_position = None
-speedBoost_spawn = False
-speedBoost_eaten = False
-
-# setting initial snake direction randomly
-direction = random.choice(['RIGHT', 'LEFT', 'UP', 'DOWN'])
-change_to = direction
-
-# initial score
-score = 0
-
-# Power-Ups state and timer
-godmode = False
-godmode_start_time = 0
-betterApple = False
-betterApple_start_time = 0
-speedBoost = False
-speedBoost_start_time = 0
-
-# displaying Score function
-def show_score(color):
-    score_surface = font.render('Score : ' + str(score), True, color)
-    score_rect = score_surface.get_rect(center=(window_x // 2, 30))
-    game_window.blit(score_surface, score_rect)
-
-# displaying GODMODE timer function
-def show_godmode_timer(remaining_time):
-    timer_surface = font.render('GODMODE: ' + str(round(remaining_time, 1)) + 's', True, white)
-    timer_rect = timer_surface.get_rect(center=(window_x // 2, 60))
-    game_window.blit(timer_surface, timer_rect)
-
-# displaying Better Apple timer function
-def show_betterApple_timer(remaining_time):
-    timer_surface = font.render('BetterApple: ' + str(round(remaining_time, 1)) + 's', True, white)
-    timer_rect = timer_surface.get_rect(center=(window_x // 2, 60))
-    game_window.blit(timer_surface, timer_rect)
-
-# displaying Speed Boost timer function
-def show_speedBoost_timer(remaining_time):
-    timer_surface = font.render('SpeedBoost: ' + str(round(remaining_time, 1)) + 's', True, white)
-    timer_rect = timer_surface.get_rect(center=(window_x // 2, 60))
-    game_window.blit(timer_surface, timer_rect)
-
-# game over function
-def game_over():
-    game_over_surface = font.render('Your Score is : ' + str(score), True, red)
-    game_over_rect = game_over_surface.get_rect(center=(window_x // 2, window_y // 2))
-    game_window.blit(game_over_surface, game_over_rect)
-    pygame.display.flip()
-    time.sleep(2)
-    game_over()
-
-# Start screen function
-def start_screen():
-    game_window.fill(black)  # Fill the screen with black
-
-    # Render the game title text
-    game_title = font.render('AlBot Snake Game', True, white)
-    title_rect = game_title.get_rect(center=(window_x // 2, window_y // 4))
-    game_window.blit(game_title, title_rect)
-
-    # Render the start prompt text
-    start_text = font.render('Click to Start', True, white)
-    start_rect = start_text.get_rect(center=(window_x // 2, window_y // 2 - 30))
-    game_window.blit(start_text, start_rect)
-
-    # Render instructions
-    instructions_title = small_font.render('-Instructions', True, white)
-    instructions_rect = instructions_title.get_rect(topleft=(50, window_y - 230))
-    game_window.blit(instructions_title, instructions_rect)
-
-    instructions_text = [
-        "Use arrow keys to move",
-        "Avoid walls and your tail",
-        "Eat food to grow",
-        "p Pause",
-        "m Add +10 Score",
-        "u remove snake segment"
-    ]
-    for i, line in enumerate(instructions_text):
-        text_surface = small_font.render(line, True, white)
-        game_window.blit(text_surface, (50, window_y - 200 + i * 30))
-
-    # Render power-ups
-    powerups_title = small_font.render('-Power-ups', True, white)
-    powerups_rect = powerups_title.get_rect(topleft=(window_x - 300, window_y - 230))
-    game_window.blit(powerups_title, powerups_rect)
-
-    powerups_text = [
-        "GODMODE: Blue Apple",
-        "Can't Die",
-        "BetterApple: Yellow Apple",
-        "2x Score and Growth",
-        "Speed Boost: Pink Apple",
-        "Twice as Fast"
-    ]
-    for i, line in enumerate(powerups_text):
-        text_surface = small_font.render(line, True, white)
-        game_window.blit(text_surface, (window_x - 300, window_y - 200 + i * 30))
-
-    pygame.display.flip()
-
-    waiting = True
-    while waiting:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                waiting = False
-
-# Pause screen Function
-def show_pause_screen():
-    pause_text = font.render('Paused', True, white)
-    pause_rect = pause_text.get_rect(center=(window_x // 2, window_y // 2))
-    game_window.blit(pause_text, pause_rect)
-    pygame.display.flip()
-
-# Restarts the game
-def game_over():
-    global snake_position, snake_body, food_position, food_spawn, score
-    global godmode_position, godmode_spawn, godmode_eaten, godmode, godmode_start_time
-    global betterApple_position, betterApple_spawn, betterApple_eaten, betterApple, betterApple_start_time
-    global speedBoost_position, speedBoost_spawn, speedBoost_eaten, speedBoost, speedBoost_start_time
-
-
-    game_over_surface = font.render('Your Score is : ' + str(score), True, red)
-    game_over_rect = game_over_surface.get_rect(center=(window_x // 2, window_y // 2))
-    game_window.blit(game_over_surface, game_over_rect)
-    pygame.display.flip()
-    time.sleep(2)
-
+async def main():
+    # defining snake default position
     snake_position = [random.randrange(1, (window_x // 10)) * 10,
                       random.randrange(1, (window_y // 10)) * 10]
-    snake_body = [[100, 50], [90, 50]]
+
+    # defining first blocks of snake body
+    snake_body = [[100, 50],
+                  [90, 50]]
+
+    # fruit position
     food_position = [random.randrange(1, (window_x // 10)) * 10,
                      random.randrange(1, (window_y // 10)) * 10]
     food_spawn = True
-    score = 0
-    godmode = False
+
+    # power-up food position
     godmode_position = None
     godmode_spawn = False
     godmode_eaten = False
-    godmode_start_time = 0
-    betterApple = False
     betterApple_position = None
     betterApple_spawn = False
     betterApple_eaten = False
-    betterApple_start_time = 0
-    speedBoost = False
     speedBoost_position = None
     speedBoost_spawn = False
     speedBoost_eaten = False
+
+    # setting initial snake direction randomly
+    direction = random.choice(['RIGHT', 'LEFT', 'UP', 'DOWN'])
+    change_to = direction
+
+    # initial score
+    score = 0
+
+    # Power-Ups state and timer
+    godmode = False
+    godmode_start_time = 0
+    betterApple = False
+    betterApple_start_time = 0
+    speedBoost = False
     speedBoost_start_time = 0
 
-    main()
+    # displaying Score function
+    def show_score(color):
+        score_surface = font.render('Score : ' + str(score), True, color)
+        score_rect = score_surface.get_rect(center=(window_x // 2, 30))
+        game_window.blit(score_surface, score_rect)
 
-# Main Function
-def main():
-    global direction, change_to, snake_position, snake_body, food_position, food_spawn, score
-    global godmode_position, godmode_spawn, godmode_eaten, godmode, godmode_start_time
-    global betterApple_position, betterApple_spawn, betterApple_eaten, betterApple, betterApple_start_time
-    global speedBoost_position, speedBoost_spawn, speedBoost_eaten, speedBoost, speedBoost_start_time
+    # displaying GODMODE timer function
+    def show_godmode_timer(remaining_time):
+        timer_surface = font.render('GODMODE: ' + str(round(remaining_time, 1)) + 's', True, white)
+        timer_rect = timer_surface.get_rect(center=(window_x // 2, 60))
+        game_window.blit(timer_surface, timer_rect)
 
+    # displaying Better Apple timer function
+    def show_betterApple_timer(remaining_time):
+        timer_surface = font.render('BetterApple: ' + str(round(remaining_time, 1)) + 's', True, white)
+        timer_rect = timer_surface.get_rect(center=(window_x // 2, 60))
+        game_window.blit(timer_surface, timer_rect)
+
+    # displaying Speed Boost timer function
+    def show_speedBoost_timer(remaining_time):
+        timer_surface = font.render('SpeedBoost: ' + str(round(remaining_time, 1)) + 's', True, white)
+        timer_rect = timer_surface.get_rect(center=(window_x // 2, 60))
+        game_window.blit(timer_surface, timer_rect)
+
+    # game over function
+    def game_over():
+        game_over_surface = font.render('Your Score is : ' + str(score), True, red)
+        game_over_rect = game_over_surface.get_rect(center=(window_x // 2, window_y // 2))
+        game_window.blit(game_over_surface, game_over_rect)
+        pygame.display.flip()
+        pygame.time.delay(2000)  # Pause for 2 seconds
+        restart_game()
+
+    # Start screen function
+    def start_screen():
+        game_window.fill(black)  # Fill the screen with black
+
+        # Render the game title text
+        game_title = font.render('AlBot Snake Game', True, white)
+        title_rect = game_title.get_rect(center=(window_x // 2, window_y // 4))
+        game_window.blit(game_title, title_rect)
+
+        # Render the start prompt text
+        start_text = font.render('Click to Start', True, white)
+        start_rect = start_text.get_rect(center=(window_x // 2, window_y // 2 - 30))
+        game_window.blit(start_text, start_rect)
+
+        # Render instructions
+        instructions_title = small_font.render('-Instructions', True, white)
+        instructions_rect = instructions_title.get_rect(topleft=(50, window_y - 230))
+        game_window.blit(instructions_title, instructions_rect)
+
+        instructions_text = [
+            "Use arrow keys to move",
+            "Avoid walls and your tail",
+            "Eat food to grow",
+            "p Pause",
+            "m Add +10 Score",
+            "u remove snake segment"
+        ]
+        for i, line in enumerate(instructions_text):
+            text_surface = small_font.render(line, True, white)
+            game_window.blit(text_surface, (50, window_y - 200 + i * 30))
+
+        # Render power-ups
+        powerups_title = small_font.render('-Power-ups', True, white)
+        powerups_rect = powerups_title.get_rect(topleft=(window_x - 300, window_y - 230))
+        game_window.blit(powerups_title, powerups_rect)
+
+        powerups_text = [
+            "GODMODE: Blue Apple",
+            "Can't Die at 200",
+            "BetterApple: Yellow Apple",
+            "2x Score and Growth at 450",
+            "Speed Boost: Pink Apple",
+            "Twice as Fast at 700"
+        ]
+        for i, line in enumerate(powerups_text):
+            text_surface = small_font.render(line, True, white)
+            game_window.blit(text_surface, (window_x - 300, window_y - 200 + i * 30))
+
+        pygame.display.flip()
+
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    waiting = False
+
+    # Pause screen Function
+    async def show_pause_screen():
+        pause_text = font.render('Paused', True, white)
+        pause_rect = pause_text.get_rect(center=(window_x // 2, window_y // 2))
+        game_window.blit(pause_text, pause_rect)
+        pygame.display.flip()
+
+    # Restarts the game
+    def restart_game():
+        nonlocal snake_position, snake_body, food_position, food_spawn, score
+        nonlocal godmode_position, godmode_spawn, godmode_eaten, godmode, godmode_start_time
+        nonlocal betterApple_position, betterApple_spawn, betterApple_eaten, betterApple, betterApple_start_time
+        nonlocal speedBoost_position, speedBoost_spawn, speedBoost_eaten, speedBoost, speedBoost_start_time
+
+        snake_position = [random.randrange(1, (window_x // 10)) * 10,
+                      random.randrange(1, (window_y // 10)) * 10]
+        snake_body = [[100, 50], [90, 50]]
+        food_position = [random.randrange(1, (window_x // 10)) * 10,
+                     random.randrange(1, (window_y // 10)) * 10]
+        food_spawn = True
+        score = 0
+        godmode = False
+        godmode_position = None
+        godmode_spawn = False
+        godmode_eaten = False
+        godmode_start_time = 0
+        betterApple = False
+        betterApple_position = None
+        betterApple_spawn = False
+        betterApple_eaten = False
+        betterApple_start_time = 0
+        speedBoost = False
+        speedBoost_position = None
+        speedBoost_spawn = False
+        speedBoost_eaten = False
+        speedBoost_start_time = 0
+        start_screen()
 
     start_screen()
-
+        
+    # Main game loop
     paused = False
-
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -243,10 +227,9 @@ def main():
                         snake_body.pop()
 
         if paused:
-            show_pause_screen()
+            await show_pause_screen()
             continue
-
-        # If two keys pressed simultaneously
+                # If two keys pressed simultaneously
         # we don't want snake to move into two 
         # directions simultaneously
         if change_to == 'UP' and direction != 'DOWN':
@@ -361,7 +344,6 @@ def main():
         # Disable Speed Boost after 20 seconds
         if speedBoost and time.time() - speedBoost_start_time > 20:
             speedBoost = False
-            speed_multiplier = 1
 
         game_window.fill(black)
 
@@ -420,6 +402,6 @@ def main():
         else:
             fps.tick(15)
 
+        await asyncio.sleep(0)
 
-if __name__ == "__main__":
-    main()
+asyncio.run(main())
